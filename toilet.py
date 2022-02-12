@@ -11,12 +11,6 @@ client = MongoClient('mongodb://localhost', 27017)
 db = client["real_mini"]
 toilet_collection = db["Toilet"]
 
-es = {
-    "estimate": "estimate",
-    "time": datetime.now() - datetime.now(),
-    "quantity": 0
-}
-
 
 class EstimateTime(BaseModel):
     estimate: str
@@ -45,37 +39,39 @@ def calculate_estimate(estimate, spend_time):
         result = (all_time + spend_time) / (quantity + 1)
     return result
 
-
-@app.get("/Toilet/get")
-def get_toilet():
-    result = toilet_num.find({}, {"_id":0})
-    x = datetime.datetime.now()
-    for i in result:
-        if(i["close"] == 0):
-            roomnum = i["room_number"]
+@app.get("/toilet/get-info")
+def get_status():
+    room1 = toilet_collection.find_one({"room_number": 1},{"_id": 0})
+    room2 = toilet_collection.find_one({"room_number": 2},{"_id": 0})
+    room3 = toilet_collection.find_one({"room_number": 3},{"_id": 0})
+    estime = toilet_collection.find_one({"estimate": "estimate"},{"_id": 0})
+    list_room = list()
+    result = list()
+    list_room.append(room1)
+    list_room.append(room2)
+    list_room.append(room3)
+    for r in list_room:
+        if(r["close"] == 0):
+            roomnumber = r["room_number"]
             status = "ว่าง"
-            time_in =  "-"
-            timeuse = "-"
-            estimate = "-"
+            str_timestart = "-"
+            timestart = "-"
+            timeusage = "-"
+            timewait = "-"
         else:
-            roomnum = i["room_number"]
+            roomnumber = r["room_number"]
             status = "ไม่ว่าง"
-            time_in = x
-            timeuse = "-"
-            estimate = 
-        print(result)
-        if result != None:
-            return {
-                "roomNumber": roomnum,
-                "status": status,
-                "timeStart": time_in,
-                "timeUsage": timeuse,
-                "timeWaiting": estimate
-            }
-        else:
-            raise HTTPException(404, f"Couldn't find toilet with number: {room}")
-
-
+            timestart = datetime.datetime.fromtimestamp(r["time_in"])
+            str_timestart = timestart.strftime("%H") + ":" + timestart.strftime("%M")
+            timeusage = datetime.datetime.now().timestamp() - r["time_in"]
+            timeusage = int(timeusage/60)
+            timewait = int(estime["time"])
+        ans = {"roomNumber": roomnumber, "status": status, "timeStart": str_timestart, "timeUsage": timeusage, "timeWaiting": timewait}
+        #print(ans)
+        result.append(ans)
+    return {
+        "result": result
+    }
 
 
 @app.post("/open-close")
