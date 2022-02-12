@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pymongo import MongoClient
 from pydantic import BaseModel
-from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -68,7 +67,7 @@ def get_status():
             str_timestart = "-"
             timestart = "-"
             timeusage = "-"
-            timewait = "-"
+            str_timewait = "-"
         else:
             roomnumber = r["room_number"]
             status = "ไม่ว่าง"
@@ -76,10 +75,13 @@ def get_status():
             str_timestart = timestart.strftime("%H") + ":" + timestart.strftime("%M")
             timeusage = datetime.now().timestamp() - r["time_in"]
             timeusage = int(timeusage / 60)
-            timewait = int(estime["time"])
+            timewait = estime["time"]
+            hr_wait = int(timewait / 3600)
+            min_wait = int((timewait - hr_wait * 3600) / 60)
+            sec_wait = int(timewait - min_wait * 60)
+            str_timewait = str(hr_wait) + ":" + str(min_wait) + ":" + str(sec_wait)
         ans = {"roomNumber": roomnumber, "status": status, "timeStart": str_timestart, "timeUsage": timeusage,
-               "timeWaiting": timewait}
-        # print(ans)
+               "timeWaiting": str_timewait}
         result.append(ans)
     return {
         "result": result
