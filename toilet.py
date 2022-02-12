@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pymongo import MongoClient
 from pydantic import BaseModel
 from fastapi.encoders import jsonable_encoder
-from datetime import datetime
+import datetime
 
 app = FastAPI()
 
@@ -54,7 +54,7 @@ def get_status():
             str_timestart = "-"
             timestart = "-"
             timeusage = "-"
-            timewait = "-"
+            str_timewait = "-"
         else:
             roomnumber = r["room_number"]
             status = "ไม่ว่าง"
@@ -63,9 +63,10 @@ def get_status():
             timeusage = datetime.datetime.now().timestamp() - r["time_in"]
             timeusage = int(timeusage/60)
             timewait = estime["time"]
-            min_wait = int(timewait/60)
-            timewait = timewait - min_wait*60
-            str_timewait = str(min_wait) + ":" + str(timewait) 
+            hr_wait = int(timewait/3600)
+            min_wait = int((timewait - hr_wait*3600)/60)
+            sec_wait = int(timewait - min_wait*60)
+            str_timewait = str(hr_wait) + ":" + str(min_wait) + ":" + str(sec_wait)  
         ans = {"roomNumber": roomnumber, "status": status, "timeStart": str_timestart, "timeUsage": timeusage, "timeWaiting": str_timewait}
         #print(ans)
         result.append(ans)
@@ -89,7 +90,7 @@ def add_toilet_open_close(status: ToiletOpen):
         }
     else:
         toilet_collection.update_one({"room_number": room}, {"$set": {"close": 0}})
-        delta = datetime.now().timestamp() - query["time_in"]
+        delta = datetime.datetime.now().timestamp() - query["time_in"]
         estimate = toilet_collection.find_one({"estimate": "estimate"}, {"_id": 0})
         estimate_time = calculate_estimate(estimate, delta)
         quantity = estimate["quantity"] + 1
