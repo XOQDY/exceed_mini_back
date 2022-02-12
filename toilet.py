@@ -96,7 +96,7 @@ def add_toilet_open_close(status: ToiletOpen):
         raise HTTPException(status_code=404, detail={
             "message": f"Error no room number {room}"
         })
-    if status.close:
+    elif status.close:
         toilet_collection.update_one({"room_number": room},
                                      {"$set": {"close": 1, "time_in": datetime.now().timestamp()}})
         return {
