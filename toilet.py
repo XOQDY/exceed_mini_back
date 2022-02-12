@@ -4,7 +4,20 @@ from pydantic import BaseModel
 from fastapi.encoders import jsonable_encoder
 from datetime import datetime
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
+
+origins = [
+    "*"
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 client = MongoClient('mongodb://localhost', 27017)
 
@@ -36,19 +49,20 @@ def calculate_estimate(estimate, spend_time):
     result = (all_time + spend_time) / (quantity + 1)
     return result
 
+
 @app.get("/toilet/get-info")
 def get_status():
-    room1 = toilet_collection.find_one({"room_number": 1},{"_id": 0})
-    room2 = toilet_collection.find_one({"room_number": 2},{"_id": 0})
-    room3 = toilet_collection.find_one({"room_number": 3},{"_id": 0})
-    estime = toilet_collection.find_one({"estimate": "estimate"},{"_id": 0})
+    room1 = toilet_collection.find_one({"room_number": 1}, {"_id": 0})
+    room2 = toilet_collection.find_one({"room_number": 2}, {"_id": 0})
+    room3 = toilet_collection.find_one({"room_number": 3}, {"_id": 0})
+    estime = toilet_collection.find_one({"estimate": "estimate"}, {"_id": 0})
     list_room = list()
     result = list()
     list_room.append(room1)
     list_room.append(room2)
     list_room.append(room3)
     for r in list_room:
-        if(r["close"] == 0):
+        if r["close"] == 0:
             roomnumber = r["room_number"]
             status = "ว่าง"
             str_timestart = "-"
@@ -58,17 +72,19 @@ def get_status():
         else:
             roomnumber = r["room_number"]
             status = "ไม่ว่าง"
-            timestart = datetime.datetime.fromtimestamp(r["time_in"])
+            timestart = datetime.fromtimestamp(r["time_in"])
             str_timestart = timestart.strftime("%H") + ":" + timestart.strftime("%M")
-            timeusage = datetime.datetime.now().timestamp() - r["time_in"]
-            timeusage = int(timeusage/60)
+            timeusage = datetime.now().timestamp() - r["time_in"]
+            timeusage = int(timeusage / 60)
             timewait = int(estime["time"])
-        ans = {"roomNumber": roomnumber, "status": status, "timeStart": str_timestart, "timeUsage": timeusage, "timeWaiting": timewait}
-        #print(ans)
+        ans = {"roomNumber": roomnumber, "status": status, "timeStart": str_timestart, "timeUsage": timeusage,
+               "timeWaiting": timewait}
+        # print(ans)
         result.append(ans)
     return {
         "result": result
     }
+
 
 @app.post("/open-close")
 def add_toilet_open_close(status: ToiletOpen):
