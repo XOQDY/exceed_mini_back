@@ -62,7 +62,7 @@ def get_status():
             str_timestart = timestart.strftime("%H") + ":" + timestart.strftime("%M")
             timeusage = datetime.datetime.now().timestamp() - r["time_in"]
             timeusage = int(timeusage/60)
-            timewait = int(estime["time"])
+            timewait = estime["time"]/60
         ans = {"roomNumber": roomnumber, "status": status, "timeStart": str_timestart, "timeUsage": timeusage, "timeWaiting": timewait}
         #print(ans)
         result.append(ans)
